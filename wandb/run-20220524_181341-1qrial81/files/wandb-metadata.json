@@ -1,0 +1,21 @@
+{
+    "os": "Darwin-20.6.0-x86_64-i386-64bit",
+    "python": "3.7.6",
+    "heartbeatAt": "2022-05-24T22:13:59.001802",
+    "startedAt": "2022-05-24T22:13:41.422862",
+    "docker": null,
+    "cpu_count": 4,
+    "cuda": null,
+    "args": null,
+    "state": "running",
+    "program": "Desktop/hyperbolic_byol/train.ipynb",
+    "root": "/Users/Derek/Desktop/hyperbolic_byol",
+    "git": {
+        "remote": "https://github.com/dcaustin33/hyperbolic_byol.git",
+        "commit": "e2f63d587425ffb78e08aa44f5e241f749bd4f90"
+    },
+    "email": "dcaustin33@gmail.com",
+    "host": "Dereks-MBP-2.lan",
+    "username": "Derek",
+    "executable": "/Users/Derek/opt/anaconda3/bin/python"
+}
