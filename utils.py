@@ -64,7 +64,7 @@ def return_default_args(args = args()):
     return args
 
 
-def fine_to_coarse():
+def fine_to_coarse_dict():
     """
     function to map the fine labels to the coarser labels for cifar-100
     """

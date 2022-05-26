@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[2]:
 
 
 import torch
@@ -18,7 +18,7 @@ import torch.nn.functional as F
 from geoopt.manifolds.stereographic import math as gmath
 
 
-# In[2]:
+# In[3]:
 
 
 from torchsummary import summary
@@ -43,7 +43,7 @@ def ResNet34(cifar = True):
     return model
 
 
-# In[3]:
+# In[4]:
 
 
 def euclidean_byol_loss_func(p: torch.Tensor, z: torch.Tensor, simplified: bool = True):
@@ -71,7 +71,7 @@ def update_target_params(online_params, target_params, tau):
         mp.data = tau * mp.data + (1 - tau) * op.data
 
 
-# In[4]:
+# In[27]:
 
 
 
@@ -84,6 +84,8 @@ class euclidean_BYOL_module(nn.Module):
         self.feature_dim = (self.network(example.unsqueeze(0))).shape[1]
         self.classifier = nn.Linear(self.feature_dim, classes)
         self.coarse_classifier = nn.Linear(self.feature_dim, coarse_classes)
+        
+        self.h_classifier = None
         
         self.projector = nn.Sequential(
             nn.Linear(self.feature_dim, projection_hidden_size),
@@ -124,7 +126,7 @@ class euclidean_BYOL_module(nn.Module):
         return out
 
 
-# In[39]:
+# In[28]:
 
 
 import mobius
@@ -139,6 +141,9 @@ class hyperbolic_BYOL_module(nn.Module):
         self.classifier = nn.Linear(self.feature_dim, classes)
         self.coarse_classifier = nn.Linear(self.feature_dim, coarse_classes)
         
+        self.h_classifier = mobius.MobiusDist2Hyperplane(self.feature_dim, classes)
+        self.h_coarse_classifier = mobius.MobiusDist2Hyperplane(self.feature_dim, coarse_classes)
+        
         self.projector = nn.Sequential(
             mobius.MobiusLinear(self.feature_dim, projection_hidden_size, hyperbolic_input = False, nonlin = nn.ReLU(), fp64_hyper = False),
             mobius.MobiusLinear(projection_hidden_size, projection_size, nonlin = nn.ReLU(), fp64_hyper = False))
@@ -151,38 +156,44 @@ class hyperbolic_BYOL_module(nn.Module):
     def momentum_forward(self, x):
         with torch.no_grad():
             representation = self.network(x)
+            h_representation = gmath.expmap0(representation, k=torch.Tensor([-1]))
             z = self.projector(representation)
         logits = self.classifier(representation.detach())
         coarse_logits = self.coarse_classifier(representation.detach())
+        
+        h_logits = self.h_classifier(h_representation.detach())
+        h_coarse_logits = self.h_coarse_classifier(h_representation.detach())
+        
+        
         out = {'Representation': representation,
               "logits": logits,
               "coarse_logits": coarse_logits,
+              "h_logits": h_logits,
+              "h_coarse_logits": h_coarse_logits,
               "z": z}    
         return out
     
     def forward(self, x):
         representation = self.network(x)
+        h_representation = gmath.expmap0(representation, k=torch.Tensor([-1]))
+        
+        h_logits = self.h_classifier(h_representation.detach())
+        h_coarse_logits = self.h_coarse_classifier(h_representation.detach())
+        
         logits = self.classifier(representation.detach())
         coarse_logits = self.coarse_classifier(representation.detach())
         z = self.projector(representation)
         p = self.predictor(z)
         
+        
         out = {'Representation': representation,
               "logits": logits,
               "coarse_logits": coarse_logits,
+              "h_logits": h_logits,
+              "h_coarse_logits": h_coarse_logits,
               "z": z,
               "p": p} 
         return out
-
-
-# In[45]:
-
-
-hbyol = hyperbolic_BYOL_module()
-ex = torch.randn(10, 3, 32, 32)
-out = hbyol(ex)
-x = torch.zeros(out['p'].shape)
-dist = hyperbolic_distance(out['z'], out['p'], torch.Tensor([-1]), keepdim=False, dim=-1)
 
 
 # In[ ]:
