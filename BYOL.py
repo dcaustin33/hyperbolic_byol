@@ -140,24 +140,44 @@ class hyperbolic_BYOL_module(nn.Module):
         self.feature_dim = (self.network(example.unsqueeze(0))).shape[1]
         self.classifier = nn.Linear(self.feature_dim, classes)
         self.coarse_classifier = nn.Linear(self.feature_dim, coarse_classes)
+        self.h_representation = mobius.MobiusLinear(self.feature_dim, classes, hyperbolic_input = False, fp64_hyper = False)
+        self.h_representation_coarse = mobius.MobiusLinear(self.feature_dim, coarse_classes, hyperbolic_input = False, fp64_hyper = False)
         
-        self.h_classifier = mobius.MobiusDist2Hyperplane(self.feature_dim, classes)
-        self.h_coarse_classifier = mobius.MobiusDist2Hyperplane(self.feature_dim, coarse_classes)
+        self.h_classifier = mobius.MobiusDist2Hyperplane(classes, classes)
+        self.h_coarse_classifier = mobius.MobiusDist2Hyperplane(coarse_classes, coarse_classes)
         
-        self.projector = nn.Sequential(
+        '''self.projector = nn.Sequential(
             mobius.MobiusLinear(self.feature_dim, projection_hidden_size, hyperbolic_input = False, nonlin = nn.ReLU(), fp64_hyper = False),
             mobius.MobiusLinear(projection_hidden_size, projection_size, nonlin = nn.ReLU(), fp64_hyper = False))
+            
+            self.predictor = nn.Sequential(
+            mobius.MobiusLinear(projection_size, projection_hidden_size, nonlin = nn.ReLU(), fp64_hyper = False),
+            mobius.MobiusLinear(projection_hidden_size, projection_size, nonlin = nn.ReLU(), fp64_hyper = False))'''
+        
+        self.projector = nn.Sequential(
+            nn.Linear(self.feature_dim, projection_hidden_size),
+            nn.BatchNorm1d(projection_hidden_size),
+            nn.ReLU(),
+            nn.Linear(projection_hidden_size, projection_size))
+        
+        self.hyperbolic_projector = mobius.MobiusLinear(projection_size, projection_size, hyperbolic_input = False, fp64_hyper = False)
         
         self.predictor = nn.Sequential(
-            mobius.MobiusLinear(projection_size, projection_hidden_size, nonlin = nn.ReLU(), fp64_hyper = False),
-            mobius.MobiusLinear(projection_hidden_size, projection_size, nonlin = nn.ReLU(), fp64_hyper = False))
+            nn.Linear(projection_size, projection_hidden_size),
+            nn.BatchNorm1d(projection_hidden_size),
+            nn.ReLU(),
+            nn.Linear(projection_hidden_size, projection_size))
+        
+        
+        
         
 
     def momentum_forward(self, x):
         with torch.no_grad():
             representation = self.network(x)
-            h_representation = gmath.expmap0(representation, k=torch.Tensor([-1]))
+            h_representation = gmath.expmap0(representation, k=torch.Tensor([-1]).to(device))
             z = self.projector(representation)
+            z = self.hyperbolic_projector(z)
         logits = self.classifier(representation.detach())
         coarse_logits = self.coarse_classifier(representation.detach())
         
@@ -175,15 +195,17 @@ class hyperbolic_BYOL_module(nn.Module):
     
     def forward(self, x):
         representation = self.network(x)
-        h_representation = gmath.expmap0(representation, k=torch.Tensor([-1]))
+        h_representation = self.h_representation(representation)
+        h_coarse_representation = self.h_representation_coarse(representation)
         
         h_logits = self.h_classifier(h_representation.detach())
-        h_coarse_logits = self.h_coarse_classifier(h_representation.detach())
+        h_coarse_logits = self.h_coarse_classifier(h_coarse_representation.detach())
         
         logits = self.classifier(representation.detach())
         coarse_logits = self.coarse_classifier(representation.detach())
         z = self.projector(representation)
         p = self.predictor(z)
+        #z = self.hyperbolic_projector(z)
         
         
         out = {'Representation': representation,
@@ -194,6 +216,8 @@ class hyperbolic_BYOL_module(nn.Module):
               "z": z,
               "p": p} 
         return out
+    
+    
 
 
 # In[ ]:

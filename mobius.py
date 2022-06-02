@@ -11,6 +11,8 @@ import torch.nn
 import torch.nn.functional
 from torch.cuda.amp import autocast
 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
 
 
 def mobius_linear(
@@ -101,7 +103,7 @@ class MobiusLinear(torch.nn.Linear):
             input = input.double()
         else:
             input = input.float()
-        with autocast(enabled=False):  # Do not use fp16
+        with autocast(enabled = False):  # Do not use fp16
             return mobius_linear(
                 input,
                 weight=self.weight,
@@ -148,7 +150,7 @@ class MobiusDist2Hyperplane(torch.nn.Module):
             input = input.double()
         else:
             input = input.float()
-        with autocast(enabled=False):  # Do not use fp16
+        with autocast(enabled = False):
             input = input.unsqueeze(-2)
             distance = gmath.dist2plane(
                 x=input, p=self.point, a=self.tangent, k=self.ball.c, signed=True

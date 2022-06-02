@@ -43,6 +43,27 @@ class args:
         return
         
 
+'''def return_default_args(args = args()):
+    args.dataset = 'cifar100'
+    args.transform_kwargs=[{'brightness': 0.4, 'contrast': 0.4, 'saturation': 0.2, 'hue': 0.1, 'color_jitter_prob': 0.8, 'gray_scale_prob': 0.2, 'horizontal_flip_prob': 0.5, 'gaussian_prob': 1.0, 'solarization_prob': 0.0, 'crop_size': 32, 'min_scale': 0.08, 'max_scale': 1.0}, {'brightness': 0.4, 'contrast': 0.4, 'saturation': 0.2, 'hue': 0.1, 'color_jitter_prob': 0.8, 'gray_scale_prob': 0.2, 'horizontal_flip_prob': 0.5, 'gaussian_prob': 0.1, 'solarization_prob': 0.2, 'crop_size': 32, 'min_scale': 0.08, 'max_scale': 1.0}]
+    # asymmetric augmentations
+    args.num_crops_per_aug = [1, 1]
+    args.batch_size = 256
+    args.num_workers = 6
+    
+    args.optimizer = 'LARS'
+    args.lr = .01
+    args.weight_decay = 1.5e-6
+    args.momentum = .9
+    args.classifier_lr = .001
+    args.classifier_weight_decay = 0
+    args.epochs = 200
+    args.warmup_epochs = 10
+    args.steps = int((50000/args.batch_size) * args.epochs)
+    args.warmup_steps = int((50000/args.batch_size) * args.warmup_epochs)
+    return args'''
+
+
 def return_default_args(args = args()):
     args.dataset = 'cifar100'
     args.transform_kwargs=[{'brightness': 0.4, 'contrast': 0.4, 'saturation': 0.2, 'hue': 0.1, 'color_jitter_prob': 0.8, 'gray_scale_prob': 0.2, 'horizontal_flip_prob': 0.5, 'gaussian_prob': 1.0, 'solarization_prob': 0.0, 'crop_size': 32, 'min_scale': 0.08, 'max_scale': 1.0}, {'brightness': 0.4, 'contrast': 0.4, 'saturation': 0.2, 'hue': 0.1, 'color_jitter_prob': 0.8, 'gray_scale_prob': 0.2, 'horizontal_flip_prob': 0.5, 'gaussian_prob': 0.1, 'solarization_prob': 0.2, 'crop_size': 32, 'min_scale': 0.08, 'max_scale': 1.0}]
@@ -52,10 +73,10 @@ def return_default_args(args = args()):
     args.num_workers = 4
     
     args.optimizer = 'LARS'
-    args.lr = .001
-    args.weight_decay = 1.5e-6
+    args.lr = .3
+    args.weight_decay = 1.5e-5
     args.momentum = .9
-    args.classifier_lr = .01
+    args.classifier_lr = .1
     args.classifier_weight_decay = 0
     args.epochs = 200
     args.warmup_epochs = 10
