@@ -74,7 +74,7 @@ def return_default_args(args = args()):
     
     args.optimizer = 'LARS'
     args.lr = .3
-    args.weight_decay = 1.5e-5
+    args.wd = 1.5e-5
     args.momentum = .9
     args.classifier_lr = .1
     args.classifier_weight_decay = 0
